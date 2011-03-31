@@ -1,22 +1,58 @@
 var sesame = require('sesame');
-var Store = require('supermarket');
+var Supermarket = require('supermarket');
+var chaos = require('chaos');
+var nStore = require('nStore');
+
 var Seq = require('seq');
 var uuid = require('uuid-pure').newId;
 
+var fs = require('fs');
 var connect = require('connect');
 var http = require('http');
 
 var assert = require('assert');
 
-exports.sesame = function () {
+exports.supermarket = function () {
+    var filename = '/tmp/sesame.supermarket.' + uuid(64) + '.db';
+    var store = new Supermarket({ filename : filename, json : true });
+    testStore(store);
+    
+    process.on('exit', function () {
+        fs.unlinkSync(filename);
+    });
+};
+
+exports.nStore = function () {
+    var filename = '/tmp/sesame.nStore.' + uuid(64) + '.db';
+    var store = nStore(filename);
+    testStore(store);
+    
+    process.on('exit', function () {
+        fs.unlinkSync(filename);
+    });
+};
+
+exports.chaos = function () {
+    var filename = '/tmp/sesame.chaos.' + uuid(64) + '.db';
+    var store = chaos(filename).mount('sessions')
+    testStore(store);
+    
+    process.on('exit', function () {
+        fs.unlinkSync(filename);
+    });
+};
+
+function testStore (store) {
     var port = 10000 + Math.floor(Math.random() * (65536 - 10000));
     
-    var filename = '/tmp/sesame.' + uuid(64) + '.db';
-    var store = new Store({ filename : filename, json : true });
     var web1 = server(store);
     web1.listen(port);
     
     var web2;
+    
+    var to = setTimeout(function () {
+        assert.fail('never finished');
+    }, 5000);
     
     function whoami (id, cb) {
         var opts = {
@@ -126,9 +162,12 @@ exports.sesame = function () {
         .seq(function () {
             web2.close();
         })
+        .seq(function () {
+            clearTimeout(to);
+        })
         .catch(assert.fail)
     ;
-};
+}
 
 function server (store) {
     var webserver = connect.createServer();
