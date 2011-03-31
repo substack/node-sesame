@@ -1,6 +1,6 @@
 {
     "name" : "sesame",
-    "version" : "0.1.1",
+    "version" : "0.1.2",
     "description" : "Session middleware for lazy people.",
     "main" : "./index.js",
     "repository" : {
@@ -13,6 +13,11 @@
         "connect" : ">=1.0.0",
         "hashish" : ">=0.0.2",
         "node-proxy" : ">=0.3.2"
+    },
+    "devDependencies" : {
+        "supermarket" : ">=1.1.2",
+        "chaos" : ">=0.1.7",
+        "nStore" : ">=0.2.1"
     },
     "keywords" : [
         "sessions",
