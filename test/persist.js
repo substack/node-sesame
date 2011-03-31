@@ -160,10 +160,8 @@ function testStore (store) {
             }).bind(this));
         })
         .seq(function () {
-            web2.close();
-        })
-        .seq(function () {
             clearTimeout(to);
+            web2.close();
         })
         .catch(assert.fail)
     ;
