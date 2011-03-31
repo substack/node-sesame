@@ -46,7 +46,7 @@ or if you want to use [supermarket](https://github.com/pkrumins/node-supermarket
         })
     }));
 
-or if you'd like to use [chaos](https://github.com/stagas/chaos)
+or if you'd like to use [chaos](https://github.com/stagas/chaos):
 
     webserver.use(require('sesame')({
         store : require('chaos')(__dirname + '/chaos.db').mount('sessions')

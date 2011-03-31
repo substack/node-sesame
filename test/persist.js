@@ -7,45 +7,41 @@ var Seq = require('seq');
 var uuid = require('uuid-pure').newId;
 
 var fs = require('fs');
-var connect = require('connect');
+
+var frameworks = [ require('connect'), require('express') ];
 var http = require('http');
 
 var assert = require('assert');
 
 exports.supermarket = function () {
     var filename = '/tmp/sesame.supermarket.' + uuid(64) + '.db';
-    var store = new Supermarket({ filename : filename, json : true });
-    testStore(store);
-    
-    process.on('exit', function () {
-        fs.unlinkSync(filename);
-    });
+    testStore(filename, new Supermarket({ filename : filename, json : true }));
 };
 
 exports.nStore = function () {
     var filename = '/tmp/sesame.nStore.' + uuid(64) + '.db';
-    var store = nStore(filename);
-    testStore(store);
-    
-    process.on('exit', function () {
-        fs.unlinkSync(filename);
-    });
+    testStore(filename, nStore(filename));
 };
 
 exports.chaos = function () {
     var filename = '/tmp/sesame.chaos.' + uuid(64) + '.db';
-    var store = chaos(filename).mount('sessions')
-    testStore(store);
+    testStore(filename, chaos(filename).mount('sessions'));
+};
+
+function testStore (filename, store) {
+    frameworks.forEach(function (framework) {
+        testFramework(framework, store);
+    });
     
     process.on('exit', function () {
         fs.unlinkSync(filename);
     });
-};
+}
 
-function testStore (store) {
+function testFramework (framework, store) {
     var port = 10000 + Math.floor(Math.random() * (65536 - 10000));
     
-    var web1 = server(store);
+    var web1 = makeServer(framework, store);
     web1.listen(port);
     
     var web2;
@@ -126,7 +122,7 @@ function testStore (store) {
             setTimeout(this.bind({}, null, id), 100);
         })
         .seq(function (id) {
-            web2 = server(store);
+            web2 = makeServer(framework, store);
             web2.listen(port);
             setTimeout(this.bind({}, null, id), 100);
         })
@@ -167,12 +163,12 @@ function testStore (store) {
     ;
 }
 
-function server (store) {
-    var webserver = connect.createServer();
-    webserver.use(connect.bodyParser());
+function makeServer (framework, store) {
+    var webserver = framework.createServer();
+    webserver.use(framework.bodyParser());
     webserver.use(sesame({ store : store }));
     
-    webserver.use(connect.router(function (app) {
+    webserver.use(framework.router(function (app) {
         app.get('/whoami', function (req, res) {
             res.writeHead(200, { 'Content-Type' : 'text/html' });
             res.end(req.session.name || 'nobody');
